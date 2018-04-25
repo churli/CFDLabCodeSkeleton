@@ -422,7 +422,7 @@ void init_imatrix( int **m, int nrl, int nrh, int ncl, int nch, int a)
 }
 
 
-int **read_pgm(const char *filename, int imax, int jmax) {
+int **read_pgm(const char *filename) {
     FILE *input = NULL;
     char line[1024];
     int levels;
@@ -451,14 +451,12 @@ int **read_pgm(const char *filename, int imax, int jmax) {
 
     printf("Image size: %d x %d\n", xsize, ysize);
 
-    assert(imax+2 == xsize && jmax+2 == ysize);
-
     /* read # of gray levels */
     fgets(line, sizeof line, input);
     sscanf(line, "%d\n", &levels);
 
     /* allocate memory for image */
-    pic = imatrix(0, imax+1, 0, jmax+1);
+    pic = imatrix(0, xsize-1, 0, ysize-1);
     printf("Image initialised...\n");
 
     for (int j = ysize-1; j >= 0; --j) {
