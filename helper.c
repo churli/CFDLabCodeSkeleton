@@ -422,84 +422,58 @@ void init_imatrix( int **m, int nrl, int nrh, int ncl, int nch, int a)
 }
 
 
-int **read_pgm(const char *filename)
-{
+int **read_pgm(const char *filename) {
     FILE *input = NULL;
     char line[1024];
     int levels;
     int xsize, ysize;
-    int i1, j1;
     int **pic = NULL;
-    
 
-    if ((input=fopen(filename,"rb"))==0)
-    {
-       char szBuff[80];
-	   sprintf( szBuff, "Can not read file %s !!!", filename );
-	   ERROR( szBuff );
+    if ((input = fopen(filename, "rb")) == 0) {
+        char szBuff[80];
+        sprintf(szBuff, "Can not read file %s !!!", filename);
+        ERROR(szBuff);
     }
 
     /* check for the right "magic number" */
-    if ( fread(line,1,3,input)!=3 )
-    {
-	    fclose(input);
-	    ERROR("Error Wrong Magic field!");
+    if (fread(line, 1, 3, input) != 3) {
+        fclose(input);
+        ERROR("Error Wrong Magic field!");
     }
 
     /* skip the comments */
     do
-    fgets(line,sizeof line,input);
-    while(*line=='#');
+        fgets(line, sizeof line, input);
+    while (*line == '#');
 
     /* read the width and height */
-    sscanf(line,"%d %d\n",&xsize,&ysize);
+    sscanf(line, "%d %d\n", &xsize, &ysize);
 
-    printf("Image size: %d x %d\n", xsize,ysize);
+    printf("Image size: %d x %d\n", xsize, ysize);
 
     /* read # of gray levels */
-    fgets(line,sizeof line,input);
-    sscanf(line,"%d\n",&levels);
+    fgets(line, sizeof line, input);
+    sscanf(line, "%d\n", &levels);
 
     /* allocate memory for image */
-    pic = imatrix(0,xsize+1,0,ysize+1);
+    pic = imatrix(0, xsize-1, 0, ysize-1);
     printf("Image initialised...\n");
 
-    /* read pixel row by row */
-    for(j1=1; j1 < ysize+1; j1++)
-    {
-	    for (i1=1; i1 < xsize+1; i1++)
-	    {
-	        int byte;
-            fscanf(input, "%d", &byte);
+    for (int j = ysize-1; j >= 0; --j) {
+        for (int i = 0; i < xsize; ++i) {
+            int value;
+            fscanf(input, "%d", &value);
 
-	        if (byte==EOF)
-	        {
-		        fclose(input);
-		        ERROR("read failed");
-	        }
-	        else
-	        {
-		        pic[i1][ysize+1-j1] = byte;
-		        printf("%d,%d: %d\n", i1,ysize+1-j1,byte);
-	        }
-	     }
-    }
-    for (i1 = 0; i1 < xsize+2; i1++)
-    {
-        pic[i1][0] = 0;
-    }
-    for (i1 = 0; i1 < xsize+2; i1++)
-    {
-        pic[i1][ysize+1] = 0;
-    }
-    for (j1 = 0; j1 < ysize+2; j1++)
-    {
-        pic[0][j1] = 0;
-        pic[xsize+1][j1] = 0;
+            if (value == EOF) {
+                fclose(input);
+                ERROR("read of geometry file failed!");
+            }
+            pic[i][j] = value;
+        }
     }
 
     /* close file */
     fclose(input);
-    
+
     return pic;
 }
