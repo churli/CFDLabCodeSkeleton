@@ -23,6 +23,18 @@ void openLogFile()
     LOG_FILE = fopen(LOG_FILE_NAME, "w");
 }
 
+void logRawString(char *fmt, ...)
+{
+    // Newline at the end of the message is included.
+    va_list args;
+    va_start(args,fmt);
+    vprintf(fmt, args);
+    va_end(args);
+    va_start(args,fmt);
+    vfprintf(LOG_FILE, fmt, args);
+    va_end(args);
+}
+
 void logEvent(double t, char *fmt, ...)
 {
     // Newline at the end of the message is included.

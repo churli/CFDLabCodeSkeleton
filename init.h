@@ -1,6 +1,8 @@
 #ifndef __INIT_H_
 #define __INIT_H_
 
+#include "boundary_val.h"
+
 /**
  * This operation initializes all the local variables reading a configuration
  * file. For every variable a macro like READ_INT() is called passing it the
@@ -37,44 +39,29 @@
  * @param eps        tolerance limit for pressure calculation
  * @param dt_value   time steps for output (after how many time steps one should
  *                   write into the output file)
+ * @param problem    the problem short string (no spaces please!)
+ * @param geometry   /path/to/geometry.pgm file
  */
-int read_parameters( 
-  const char *szFileName,
-  double *Re,
-  double *UI,
-  double *VI,
-  double *PI,
-  double *GX,
-  double *GY,
-  double *t_end,
-  double *xlength,
-  double *ylength,
-  double *dt,
-  double *dx,
-  double *dy,
-  int  *imax,
-  int  *jmax,
-  double *alpha,
-  double *omg,
-  double *tau,
-  int  *itermax,
-  double *eps,
-  double *dt_value
-);
+int read_parameters(const char *szFileName, double *Re, double *UI, double *VI, double *PI, double *GX, double *GY,
+                    double *t_end, double *xlength, double *ylength, double *dt, double *dx, double *dy, int *imax,
+                    int *jmax, double *alpha, double *omg, double *tau, int *itermax, double *eps, double *dt_value,
+                    char *problem, char *geometry, BoundaryInfo boundaryInfo[4], 
+                    double *beta, double *TI, double *T_h, double *T_c, double* Pr);
 
 /**
  * The arrays U,V and P are initialized to the constant values UI, VI and PI on
  * the whole domain.
  */
-void init_uvp(
-  double UI,
-  double VI,
-  double PI,
+void init_uvpt(double UI, double VI, double PI, double TI, int imax, int jmax, double **U, double **V, double **P,
+               double **T, int **Flags);
+
+void init_flag(
+  char* problem,
+  char* geometry,
   int imax,
   int jmax,
-  double **U,
-  double **V,
-  double **P
+  int** Flag,
+  int* counter
 );
 
 #endif

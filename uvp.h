@@ -2,6 +2,8 @@
 #define __UVP_H__
 
 
+#include "boundary_val.h"
+
 /**
  * Determines the value of U and G according to the formula
  *
@@ -23,22 +25,11 @@
  * @f$ i=1,\ldots,imax, \quad j=1,\ldots,jmax-1 @f$
  *
  */
-void calculate_fg(
-  double Re,
-  double GX,
-  double GY,
-  double alpha,
-  double dt,
-  double dx,
-  double dy,
-  int imax,
-  int jmax,
-  double **U,
-  double **V,
-  double **F,
-  double **G
-);
+void calculate_fg(double Re, double GX, double GY, double alpha, double beta, double dt, double dx, double dy, int imax,
+                  int jmax, double **U, double **V, double **F, double **G, double **T, int **Flags);
 // Helper functions for calculate_fg
+double computeF(double Re, double GX, double alpha, double beta, double dt, double dx, double dy, double **U, double **V, double **T, int i, int j);
+double computeG(double Re, double GY, double alpha, double beta, double dt, double dx, double dy, double **U, double **V, double **T, int i, int j);
 double secondDerivativeDx(double** A, int i, int j, double h);
 double secondDerivativeDy(double** A, int i, int j, double h);
 double productDerivativeDx(double** A, double** B, int i, int j, double h, double alpha);
@@ -53,16 +44,8 @@ double squareDerivativeDy(double **A, int i, int j, double h, double alpha);
  * @f$ rs = \frac{1}{\delta t} \left( \frac{F^{(n)}_{i,j}-F^{(n)}_{i-1,j}}{\delta x} + \frac{G^{(n)}_{i,j}-G^{(n)}_{i,j-1}}{\delta y} \right)  @f$
  *
  */
-void calculate_rs(
-  double dt,
-  double dx,
-  double dy,
-  int imax,
-  int jmax,
-  double **F,
-  double **G,
-  double **RS
-);
+void
+calculate_rs(double dt, double dx, double dy, int imax, int jmax, double **F, double **G, double **RS, int **Flags);
 
 
 /**
@@ -75,6 +58,7 @@ void calculate_rs(
  */
 void calculate_dt(
   double Re,
+  double Pr,
   double tau,
   double *dt,
   double dx,
@@ -99,17 +83,11 @@ void calculate_dt(
  *
  * @image html calculate_uv.jpg
  */
-void calculate_uv(
-  double dt,
-  double dx,
-  double dy,
-  int imax,
-  int jmax,
-  double **U,
-  double **V,
-  double **F,
-  double **G,
-  double **P
-);
+void calculate_uv(double dt, double dx, double dy, int imax, int jmax, double **U, double **V, double **F, double **G,
+                  double **P, int **Flags);
+
+
+void calculate_T(double Re, double Pr, double dt, double dx, double dy, double alpha, int imax, int jmax,
+                 double **T, double **U, double **V);
 
 #endif

@@ -6,6 +6,7 @@
 #define SIM_LOGGER_H
 
 void openLogFile();
+void logRawString(char *fmt, ...);
 void logEvent(double t, char *fmt, ...);
 void logMsg(char *fmt, ...);
 void closeLogFile();

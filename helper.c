@@ -4,6 +4,8 @@
 #include "helper.h"
 #include "logger.h"
 
+
+
 /* ----------------------------------------------------------------------- */
 /*                             auxiliary functions                         */
 /* ----------------------------------------------------------------------- */
@@ -29,6 +31,75 @@ double fmax( double a, double b)
 {
     if( a > b ) return a;
     return b;
+}
+/* ----------------------------------------------------------------------- */
+/*                             custom auxiliary functions                  */
+/* ----------------------------------------------------------------------- */
+
+// Returns 1 (True) if the cell is an obstacle
+int isObstacle(int flag){
+    return (flag>>CENTER)&1;
+}
+
+// Returns 1 (True) if the cell is fluid
+int isFluid(int flag){
+    return !((flag>>CENTER)&1);
+}
+
+// Returns 1 (True) if the neighbouring cell in the indicated direction is an obstacle
+int isNeighbourObstacle(int flag, Direction direction){
+    return (flag>>direction)&1;
+}
+
+// Returns 1 (True) if the neighbouring cell in the indicated direction is fluid
+int isNeighbourFluid(int flag, Direction direction){
+    return !((flag>>direction)&1);
+}
+
+// Returns 1 (True) if the cell is present at a corner (bordering only 2 fluid cells)
+int isCorner(int flag){
+//    return ((flag&(1<<TOP))>>TOP)^((flag&(1<<BOT))>>BOT) && ((flag&(1<<LEFT))>>LEFT)^((flag&(1<<RIGHT))>>RIGHT);
+    return ((flag>>TOP)&1)^((flag>>BOT)&1) && ((flag>>LEFT)&1)^((flag>>RIGHT)&1);
+}
+
+
+// Computes skip condition for u-boundary value determination (if top, right and bottom cells are obstacles)
+int skipU(int flag){
+    return (flag&(1<<TOP)) && (flag&(1<<RIGHT)) && (flag&(1<<BOT));
+}
+
+// Computes skip condition for v-boundary value determination (if left, top and right cells are obstacles)
+int skipV(int flag){
+    return (flag&(1<<LEFT)) && (flag&(1<<TOP)) && (flag&(1<<RIGHT));
+}
+
+// Function that checks geometry for forbidden cases
+void geometryCheck(int** Flag, int imax, int jmax){
+    int isForbidden = 0;
+    for (int j = jmax; j > 0; j--)
+    {
+        for (int i = 1; i < imax + 1; i++)
+        {
+            if( isFluid(Flag[i][j]) )
+            {
+                continue;
+            }
+            else if( ( isFluid(Flag[i][j + 1]) && isFluid(Flag[i][j - 1]) ) ||
+                 ( isFluid(Flag[i - 1][j]) && isFluid(Flag[i + 1][j]) )  )
+            {
+                logMsg("Forbidden Geometry present at (%d,%d)", i, j);
+                isForbidden++;
+            }
+        }
+    }
+    if(isForbidden == 0){
+        logMsg("Geometry has no forbidden configurations!");
+    }
+    else
+    {
+        logMsg("%d forbidden geometries found!",isForbidden);
+        ERROR("Forbidden geometries!");
+    }
 }
 
 
@@ -88,7 +159,7 @@ void errhandler( int nLine, const char *szFile, const char *szString )
 /* function. To maintain the string over several program calls, it has to be */
 /* copied!!!                                                                 */
 /*                                                                           */
-char* find_string( const char* szFileName, const char *szVarName )
+char *find_string(const char *szFileName, const char *szVarName, Optional optional)
 { 
     int nLine = 0;
     int i;
@@ -148,12 +219,13 @@ char* find_string( const char* szFileName, const char *szVarName )
 	return szValue;
     }  
    
-    READ_ERROR("variable not found", szVarName, szFileName, nLine);
+    if (optional == REQUIRED)
+        READ_ERROR("variable not found", szVarName, szFileName, nLine);
     
     return NULL;		/* dummy to satisfy the compiler  */
 } 
 
-void read_string( const char* szFileName, const char* szVarName, char*   pVariable)
+void read_string(const char *szFileName, const char *szVarName, char *pVariable, Optional optional)
 {
     char* szValue = NULL;	/* string containg the read variable value */
 
@@ -162,24 +234,25 @@ void read_string( const char* szFileName, const char* szVarName, char*   pVariab
     if( pVariable  == 0 )  ERROR("null pointer given as variable" );
 
     if( szVarName[0] == '*' )
-	szValue = find_string( szFileName, szVarName +1 );
+	szValue = find_string(szFileName, szVarName + 1, optional);
     else
-	szValue = find_string( szFileName, szVarName );
+	szValue = find_string(szFileName, szVarName, optional);
     
-    if( sscanf( szValue, "%s", pVariable) == 0)
-	READ_ERROR("wrong format", szVarName, szFileName,0);
-
-//    printf( "File: %s\t\t%s%s= %s\n", szFileName,
-//	                              szVarName,
-//	                              &("               "[min_int( strlen(szVarName), 15)]),
-//	                              pVariable );
+    if (szValue)
+    {
+        if (sscanf(szValue, "%s", pVariable) == 0)
+        READ_ERROR("wrong format", szVarName, szFileName, 0);
+    }
+    else // If not found default to 0
+        strcpy(pVariable, "NULLSTRING");
+    
     logMsg( "File: %s\t\t%s%s= %s", szFileName,
             szVarName,
             &("               "[min_int( strlen(szVarName), 15)]),
             pVariable );
 }
 
-void read_int( const char* szFileName, const char* szVarName, int* pVariable)
+void read_int(const char *szFileName, const char *szVarName, int *pVariable, Optional optional)
 {
     char* szValue = NULL;	/* string containing the read variable value */
 
@@ -188,24 +261,25 @@ void read_int( const char* szFileName, const char* szVarName, int* pVariable)
     if( pVariable  == 0 )  ERROR("null pointer given as variable" );
 
     if( szVarName[0] == '*' )
-	szValue = find_string( szFileName, szVarName +1 );
+	szValue = find_string(szFileName, szVarName + 1, optional);
     else
-	szValue = find_string( szFileName, szVarName );
+	szValue = find_string(szFileName, szVarName, optional);
     
-    if( sscanf( szValue, "%d", pVariable) == 0)
-	READ_ERROR("wrong format", szVarName, szFileName, 0);
-
-//    printf( "File: %s\t\t%s%s= %d\n", szFileName,
-//	                              szVarName,
-//	                              &("               "[min_int( strlen(szVarName), 15)]),
-//	                              *pVariable );
+    if (szValue)
+    {
+        if (sscanf(szValue, "%d", pVariable) == 0)
+        READ_ERROR("wrong format", szVarName, szFileName, 0);
+    }
+    else // If not found default to 0
+        *pVariable = 0;
+    
     logMsg( "File: %s\t\t%s%s= %d", szFileName,
             szVarName,
             &("               "[min_int( strlen(szVarName), 15)]),
             *pVariable );
 }
 
-void read_double( const char* szFileName, const char* szVarName, double* pVariable)
+void read_double(const char *szFileName, const char *szVarName, double *pVariable, Optional optional)
 {
     char* szValue = NULL;	/* String mit dem eingelesenen Variablenwert */
 
@@ -214,17 +288,18 @@ void read_double( const char* szFileName, const char* szVarName, double* pVariab
     if( pVariable  == 0 )  ERROR("null pointer given as variable" );
 
     if( szVarName[0] == '*' )
-	szValue = find_string( szFileName, szVarName +1 );
+	szValue = find_string(szFileName, szVarName + 1, optional);
     else
-	szValue = find_string( szFileName, szVarName );
+        szValue = find_string(szFileName, szVarName, optional);
     
-    if( sscanf( szValue, "%lf", pVariable) == 0)
-	READ_ERROR("wrong format", szVarName, szFileName, 0);
-
-//    printf( "File: %s\t\t%s%s= %f\n", szFileName,
-//	                              szVarName,
-//	                              &("               "[min_int( strlen(szVarName), 15)]),
-//	                              *pVariable );
+    if (szValue)
+    {
+        if (sscanf(szValue, "%lf", pVariable) == 0)
+        READ_ERROR("wrong format", szVarName, szFileName, 0);
+    }
+    else // If not found default to 0
+        *pVariable = 0.0;
+    
     logMsg( "File: %s\t\t%s%s= %f", szFileName,
             szVarName,
             &("               "[min_int( strlen(szVarName), 15)]),

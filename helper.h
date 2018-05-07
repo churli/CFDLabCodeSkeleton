@@ -24,6 +24,9 @@
 /**
  * Stores the last timer value 
  */
+//typedef enum Direction {CENTER=1, TOP=16, BOT=8, LEFT=4, RIGHT=2} Direction;
+typedef enum Direction {CENTER=0, TOP=4, BOT=3, LEFT=2, RIGHT=1} Direction;
+typedef enum Optional {REQUIRED, OPTIONAL} Optional;
 extern clock_t last_timer_reset;   
 
 
@@ -31,6 +34,15 @@ int min( int a, int b);
 int max( int a, int b);
 double fmin( double a, double b);
 double fmax( double a, double b);
+
+int isObstacle(int flag);   // Current cell is an obstacle
+int isFluid(int flag);      // Current cell is fluid
+int isNeighbourObstacle(int flag, Direction direction); // Current cell's neighbor in the specified direction is obstacle
+int isNeighbourFluid(int flag, Direction direction);    // Current cell's neighbor in the specified direction is fluid
+int isCorner(int flag); // Current cell is a corner obstacle
+int skipU(int flag);    // Current cell is surrounded by obstacles to its Top-Right-Bottom
+int skipV(int flag);    // Current cell is surrounded by obstacles to its Left-Top-Right
+void geometryCheck(int** flag, int imax, int jmax);  //Checks if forbidden geometry is in pgm
 
 
 /**
@@ -74,7 +86,7 @@ void  errhandler( int nLine, const char *szFile, const char *szString );
  * READ_INT( "MyFile.dat", imax );
  * READ_STRING( szFile, szProblem );
  */
-#define READ_INT( szFileName, VarName)    read_int   ( szFileName, #VarName, &(VarName) ) 
+#define READ_INT( szFileName, VarName, Optional)    read_int   ( szFileName, #VarName, &(VarName), Optional )
 
 /**
  * Reading from a datafile.
@@ -86,7 +98,7 @@ void  errhandler( int nLine, const char *szFile, const char *szString );
  * READ_INT( "MyFile.dat", imax );
  * READ_STRING( szFile, szProblem );
  */
-#define READ_DOUBLE( szFileName, VarName) read_double( szFileName, #VarName, &(VarName) )
+#define READ_DOUBLE( szFileName, VarName, Optional) read_double( szFileName, #VarName, &(VarName), Optional )
 
 /**
  * Reading from a datafile.
@@ -98,11 +110,11 @@ void  errhandler( int nLine, const char *szFile, const char *szString );
  * READ_INT( "MyFile.dat", imax );
  * READ_STRING( szFile, szProblem );
  */
-#define READ_STRING( szFileName, VarName) read_string( szFileName, #VarName,  (VarName) )
+#define READ_STRING( szFileName, VarName, Optional) read_string( szFileName, #VarName,  (VarName), Optional )
 
-void read_string( const char* szFilename, const char* szName, char*  sValue);
-void read_int   ( const char* szFilename, const char* szName, int*    nValue);
-void read_double( const char* szFilename, const char* szName, double*  Value);
+void read_string(const char *szFilename, const char *szName, char *sValue, Optional optional);
+void read_int(const char *szFilename, const char *szName, int *nValue, Optional optional);
+void read_double(const char *szFilename, const char *szName, double *Value, Optional optional);
 
 
 /**
