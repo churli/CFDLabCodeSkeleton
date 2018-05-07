@@ -1,6 +1,7 @@
 #include "helper.h"
 #include "visual.h"
 #include "init.h"
+#include "sor.h"
 #include <stdio.h>
 
 
